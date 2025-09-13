@@ -26,16 +26,28 @@ def depth_first(tree: TreeNode, callback: Callable[[TreeNode], TreeNode]) -> Tre
         return callback(tree)
 
 
+def is_computed(node: TreeNode) -> bool:
+    return isinstance(node, str) and ':=' in node
+
+
+def find_computed_nodes(tree: TreeNode) -> list[str]:
+    nodes = []
+
+    def callback(n):
+        if is_computed(n):
+            nodes.append(n)
+        return n
+    depth_first(tree, callback)
+    return nodes
+
+
 def main() -> None:
     with open("./test.yml", "r+") as f:
         data: TreeNode = load(f, Loader=Loader)
         f.seek(0)
         f.truncate(0)
 
-        def foo(t):
-            print(t)
-            return t
-        data = depth_first(data, foo)
+        print(find_computed_nodes(data))
         dump(data, f, Dumper=Dumper, sort_keys=False)
 
 
