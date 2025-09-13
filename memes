@@ -27,13 +27,16 @@ def depth_first(tree: TreeNode, callback: Callable[[TreeNode], TreeNode]) -> Tre
 
 
 def main() -> None:
-    with open("./test.yml") as f:
+    with open("./test.yml", "r+") as f:
         data: TreeNode = load(f, Loader=Loader)
+        f.seek(0)
+        f.truncate(0)
 
         def foo(t):
             print(t)
             return t
-        depth_first(data, foo)
+        data = depth_first(data, foo)
+        dump(data, f, Dumper=Dumper, sort_keys=False)
 
 
 if __name__ == "__main__":
