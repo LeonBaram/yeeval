@@ -17,7 +17,7 @@ TreeNode = dict[str, Union[int, float, str,
                            bool, list['TreeNode'], 'TreeNode']]
 
 
-def mutate(tree: TreeNode, callback: Callable[[TreeNode], None]) -> None:
+def depth_first(tree: TreeNode, callback: Callable[[TreeNode], None]) -> None:
     """
     does a depth-first traversal of the input tree,
     applying the callback to each non-leaf node.
@@ -27,17 +27,17 @@ def mutate(tree: TreeNode, callback: Callable[[TreeNode], None]) -> None:
     """
     if isinstance(tree, list):
         for node in tree:
-            mutate(node, callback)
+            depth_first(node, callback)
     elif isinstance(tree, dict):
         callback(tree)
         for key, node in tree.items():
-            mutate(node, callback)
+            depth_first(node, callback)
 
 
 def main() -> None:
     with open("./test.yml") as f:
         data: TreeNode = load(f, Loader=Loader)
-        mutate(data, lambda t: print(list(t.values())))
+        depth_first(data, lambda t: print(list(t.values())))
 
 
 if __name__ == "__main__":
