@@ -5,6 +5,7 @@
 #     "pyyaml",
 # ]
 # ///
+from typing import Union, Iterable, Callable
 from yaml import load, dump
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -12,10 +13,36 @@ except ImportError:
     from yaml import Loader, Dumper
 
 
+TreeNode = dict[str, Union[int, float, str,
+                           bool, list['TreeNode'], 'TreeNode']]
+
+
+def is_primitive(node: TreeNode) -> bool:
+    return not (isinstance(node, list) or isinstance(node, dict))
+
+
+def mutate(tree: TreeNode, callback: Callable[[TreeNode], None]) -> None:
+    if is_primitive(tree):
+        return
+    if isinstance(tree, list):
+        for node in tree:
+            mutate(node, callback)
+    primitives = dict()
+    subtrees = dict()
+    for key, node in tree.items():
+        if is_primitive(node):
+            primitives[key] = node
+        else:
+            subtrees[key] = node
+    callback(primitives)
+    for key, node in subtrees.items():
+        mutate(node, callback)
+
+
 def main() -> None:
     with open("./test.yml") as f:
-        data = load(f, Loader=Loader)
-        print(data)
+        data: TreeNode = load(f, Loader=Loader)
+        mutate(data, lambda t: print(list(t.values())))
 
 
 if __name__ == "__main__":
