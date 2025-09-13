@@ -16,11 +16,10 @@ except ImportError:
     from yaml import Loader, Dumper
 
 
-TreeNode = Union[int, float, str, bool,
-                 list['TreeNode'], dict[str, 'TreeNode']]
+TreeNode = SimpleNamespace
 
 
-def depth_first(tree: TreeNode, callback: Callable[[TreeNode], TreeNode]) -> TreeNode:
+def depth_first(tree: any, callback: Callable[[any], any]) -> any:
     if isinstance(tree, list):
         return [depth_first(node, callback) for node in tree]
     elif isinstance(tree, dict):
@@ -29,11 +28,11 @@ def depth_first(tree: TreeNode, callback: Callable[[TreeNode], TreeNode]) -> Tre
         return callback(tree)
 
 
-def is_computed(node: TreeNode) -> bool:
+def is_computed(node: any) -> bool:
     return isinstance(node, str) and ':=' in node
 
 
-def find_computed_nodes(tree: TreeNode) -> list[str]:
+def find_computed_nodes(tree: any) -> list[str]:
     nodes = []
 
     def callback(n):
@@ -44,27 +43,27 @@ def find_computed_nodes(tree: TreeNode) -> list[str]:
     return nodes
 
 
-def to_namespace(tree: TreeNode) -> SimpleNamespace:
+def to_treenode(tree: any) -> TreeNode:
     if isinstance(tree, dict):
-        return SimpleNamespace(**{key: to_namespace(val) for key, val in tree.items()})
+        return TreeNode(**{key: to_treenode(val) for key, val in tree.items()})
     return tree
 
 
-def from_namespace(tree) -> TreeNode:
-    if isinstance(tree, SimpleNamespace):
-        return {key: from_namespace(val) for key, val in tree.__dict__.items()}
+def to_raw(tree: any) -> any:
+    if isinstance(tree, TreeNode):
+        return {key: to_raw(val) for key, val in tree.__dict__.items()}
     return tree
 
 
-def load_yaml(file: TextIOWrapper) -> SimpleNamespace:
-    data: TreeNode = load(file, Loader=Loader)
-    return to_namespace(data)
+def load_yaml(file: TextIOWrapper) -> TreeNode:
+    data: any = load(file, Loader=Loader)
+    return to_treenode(data)
 
 
-def save_yaml(data: SimpleNamespace, file: TextIOWrapper):
+def save_yaml(data: TreeNode, file: TextIOWrapper):
     file.seek(0)
     file.truncate(0)
-    dump(from_namespace(data), file, Dumper=Dumper, sort_keys=False)
+    dump(to_raw(data), file, Dumper=Dumper, sort_keys=False)
 
 
 def main() -> None:
