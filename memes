@@ -13,8 +13,8 @@ except ImportError:
     from yaml import Loader, Dumper
 
 
-TreeNode = dict[str, Union[int, float, str,
-                           bool, list['TreeNode'], 'TreeNode']]
+TreeNode = Union[int, float, str, bool,
+                 list['TreeNode'], dict[str, 'TreeNode']]
 
 
 def depth_first(tree: TreeNode, callback: Callable[[TreeNode], TreeNode]) -> TreeNode:
