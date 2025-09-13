@@ -17,10 +17,6 @@ TreeNode = dict[str, Union[int, float, str,
                            bool, list['TreeNode'], 'TreeNode']]
 
 
-def is_primitive(node: TreeNode) -> bool:
-    return not (isinstance(node, list) or isinstance(node, dict))
-
-
 def mutate(tree: TreeNode, callback: Callable[[TreeNode], None]) -> None:
     """
     does a depth-first traversal of the input tree,
@@ -29,21 +25,13 @@ def mutate(tree: TreeNode, callback: Callable[[TreeNode], None]) -> None:
     "non-leaf" because callback() is intended to mutate (portions of) the tree,
     so callback() is passed a parent dict, instead of a node.
     """
-    if is_primitive(tree):
-        return
     if isinstance(tree, list):
         for node in tree:
             mutate(node, callback)
-    primitives = dict()
-    subtrees = dict()
-    for key, node in tree.items():
-        if is_primitive(node):
-            primitives[key] = node
-        else:
-            subtrees[key] = node
-    callback(primitives)
-    for key, node in subtrees.items():
-        mutate(node, callback)
+    elif isinstance(tree, dict):
+        callback(tree)
+        for key, node in tree.items():
+            mutate(node, callback)
 
 
 def main() -> None:
