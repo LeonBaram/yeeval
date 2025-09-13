@@ -5,10 +5,17 @@
 #     "pyyaml",
 # ]
 # ///
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 
 def main() -> None:
-    print("Hello from memes!")
+    with open("./test.yml") as f:
+        data = load(f, Loader=Loader)
+        print(data)
 
 
 if __name__ == "__main__":
