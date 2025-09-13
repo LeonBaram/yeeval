@@ -5,6 +5,9 @@
 #     "pyyaml",
 # ]
 # ///
+import pprint
+from io import TextIOWrapper
+from types import SimpleNamespace
 from typing import Union, Callable
 from yaml import load, dump
 try:
@@ -41,14 +44,36 @@ def find_computed_nodes(tree: TreeNode) -> list[str]:
     return nodes
 
 
-def main() -> None:
-    with open("./test.yml", "r+") as f:
-        data: TreeNode = load(f, Loader=Loader)
-        f.seek(0)
-        f.truncate(0)
+def to_namespace(tree: TreeNode) -> SimpleNamespace:
+    if isinstance(tree, dict):
+        return SimpleNamespace(**{key: to_namespace(val) for key, val in tree.items()})
+    return tree
 
-        print(find_computed_nodes(data))
-        dump(data, f, Dumper=Dumper, sort_keys=False)
+
+def from_namespace(tree) -> TreeNode:
+    if isinstance(tree, SimpleNamespace):
+        return {key: from_namespace(val) for key, val in tree.__dict__.items()}
+    return tree
+
+
+def load_yaml(file: TextIOWrapper) -> SimpleNamespace:
+    data: TreeNode = load(file, Loader=Loader)
+    return to_namespace(data)
+
+
+def save_yaml(data: SimpleNamespace, file: TextIOWrapper):
+    file.seek(0)
+    file.truncate(0)
+    dump(from_namespace(data), file, Dumper=Dumper, sort_keys=False)
+
+
+def main() -> None:
+    with open("test.yml", "r+") as f:
+        data = load_yaml(f)
+
+        pprint.pp(data)
+
+        save_yaml(data, f)
 
 
 if __name__ == "__main__":
