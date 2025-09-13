@@ -5,7 +5,7 @@
 #     "pyyaml",
 # ]
 # ///
-from typing import Union, Iterable, Callable
+from typing import Union, Callable
 from yaml import load, dump
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
