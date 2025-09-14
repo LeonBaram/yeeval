@@ -5,6 +5,7 @@
 #     "pyyaml",
 # ]
 # ///
+import sys
 from io import TextIOWrapper
 from types import SimpleNamespace
 from typing import Any
