@@ -96,13 +96,13 @@ def save_yaml(data: TreeNode, file: TextIOWrapper):
 def main() -> None:
     assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
     filename = sys.argv[1]
-    with open(filename, "r+") as f:
+    with open(filename, "r") as f:
         # save copy of original file in case of unexpected errors
         original_file = f.read()
-        f.seek(0)
-        f.truncate(0)
+    with open(filename, "r+") as f:
         try:
             data = load_yaml(f)
+            __import__('pprint').pprint(data)
             save_yaml(data, f)
         except Exception as e:
             # write original file back, then throw
