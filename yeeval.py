@@ -97,8 +97,19 @@ def main() -> None:
     assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
     filename = sys.argv[1]
     with open(filename, "r+") as f:
-        data = load_yaml(f)
-        save_yaml(data, f)
+        # save copy of original file in case of unexpected errors
+        original_file = f.read()
+        f.seek(0)
+        f.truncate(0)
+        try:
+            data = load_yaml(f)
+            save_yaml(data, f)
+        except Exception as e:
+            # write original file back, then throw
+            f.seek(0)
+            f.truncate(0)
+            f.write(original_file)
+            raise e
 
 
 if __name__ == "__main__":
