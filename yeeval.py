@@ -5,7 +5,6 @@
 #     "pyyaml",
 # ]
 # ///
-import pprint
 from io import TextIOWrapper
 from types import SimpleNamespace
 from typing import Any
@@ -46,7 +45,6 @@ class TreeNode(SimpleNamespace):
                 return self.__dict__[key]
             return self.__getattribute__(key)
         except AttributeError:
-            print(f"getting global {key}")
             return globals()['__builtins__'].__getattribute__(key)
 
     def __getattribute__(self, name: str):
@@ -54,7 +52,6 @@ class TreeNode(SimpleNamespace):
         if isinstance(val, str) and ':=' in val:
             value, definition = val.split(':=')
             value = float(evaluate(definition))
-            print(f"evaluated {name} as {value}")
             self.__dict__[name] = f"{value} := {definition.strip()}"
             return value
         else:
@@ -91,9 +88,6 @@ def save_yaml(data: TreeNode, file: TextIOWrapper):
 def main() -> None:
     with open("test.yml", "r+") as f:
         data = load_yaml(f)
-
-        pprint.pp(data)
-
         save_yaml(data, f)
 
 
