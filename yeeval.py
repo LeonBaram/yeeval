@@ -38,6 +38,13 @@ def evaluate(expr):
     return result
 
 
+def is_computed_value(val: Any) -> bool:
+    """
+    a value is considered "computed" if it is a string with a walrus operator (":=")
+    """
+    return isinstance(val, str) and ':=' in val
+
+
 class TreeNode(SimpleNamespace):
     def __getitem__(self, key: str):
         try:
@@ -50,7 +57,7 @@ class TreeNode(SimpleNamespace):
 
     def __getattribute__(self, name: str):
         val = object.__getattribute__(self, name)
-        if isinstance(val, str) and ':=' in val:
+        if is_computed_value(val):
             value, definition = val.split(':=')
             value = float(evaluate(definition))
             self.__dict__[name] = f"{value} := {definition.strip()}"
