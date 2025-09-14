@@ -59,7 +59,7 @@ class TreeNode(SimpleNamespace):
         val = object.__getattribute__(self, name)
         if is_computed_value(val):
             value, definition = val.split(':=')
-            value = float(evaluate(definition))
+            value = evaluate(definition)
             self.__dict__[name] = f"{value} := {definition.strip()}"
             return value
         else:

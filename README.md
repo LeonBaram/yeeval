@@ -43,5 +43,4 @@ Each definition is evaluated as a Python expression. You can reference any other
 ## Limitations
 
 - **No comment support** -- if the input yaml has any comments, they are erased
-- **OnlyFloats** -- any computed expression is cast to a `float()` before being printed
 - **autoformatting, but worse** -- the script re-prints the entire yaml file when run, resetting any whitespace formatting/indentation
