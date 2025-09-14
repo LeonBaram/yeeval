@@ -44,3 +44,7 @@ Each definition is evaluated as a Python expression. You can reference any other
 
 - **No comment support** -- if the input yaml has any comments, they are erased
 - **autoformatting, but worse** -- the script re-prints the entire yaml file when run, resetting any whitespace formatting/indentation
+
+## TODO
+- switch from PyYAML to [ruamel.yaml](https://yaml.dev/doc/ruamel.yaml/example/#top)
+    - should fix the "no comments" and "worse autoformatting" limitations
