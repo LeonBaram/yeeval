@@ -16,6 +16,10 @@ b: 2
 c: 3.0 := a+b
 ```
 
+## Usage
+
+`yeeval.py <filename>`
+
 ## What the script does
 
 When executed, the script does the following:

@@ -86,7 +86,9 @@ def save_yaml(data: TreeNode, file: TextIOWrapper):
 
 
 def main() -> None:
-    with open("test.yml", "r+") as f:
+    assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
+    filename = sys.argv[1]
+    with open(filename, "r+") as f:
         data = load_yaml(f)
         save_yaml(data, f)
 
