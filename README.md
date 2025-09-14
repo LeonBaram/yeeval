@@ -48,3 +48,4 @@ Each definition is evaluated as a Python expression. You can reference any other
 ## TODO
 - switch from PyYAML to [ruamel.yaml](https://yaml.dev/doc/ruamel.yaml/example/#top)
     - should fix the "no comments" and "worse autoformatting" limitations
+- possibly consider using comments for computed value definitions, instead of a string with a walrus
