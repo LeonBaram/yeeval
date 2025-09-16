@@ -61,7 +61,8 @@ class TreeNode:
 
     def __is_computed(self, key: str) -> bool:
         return (key in self._ast_node.ca.items
-                and self._ast_node.ca.items[key][2] is not None)
+                and self._ast_node.ca.items[key][2] is not None
+                and self._ast_node.ca.items[key][2].value.startswith("#="))
 
     def __get_definition(self, key: str) -> str:
         return self._ast_node.ca.items[key][2].value.lstrip("#=").strip()
