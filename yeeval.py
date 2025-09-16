@@ -48,6 +48,14 @@ class TreeNode:
         for key, val in ast_node.items():
             if is_ast_node(val):
                 setattr(self, key, TreeNode(val))
+            elif isinstance(val, list):
+                values = []
+                for i in range(len(val)):
+                    if is_ast_node(val[i]):
+                        values.append(TreeNode(val[i]))
+                    else:
+                        values.append(val[i])
+                setattr(self, key, values)
             else:
                 setattr(self, key, val)
 
