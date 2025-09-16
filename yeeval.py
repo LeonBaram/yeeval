@@ -3,29 +3,28 @@
 # requires-python = ">=3.11"
 # dependencies = [
 #     "pyyaml",
+#     "ruamel-yaml",
 # ]
 # ///
 import sys
 from io import TextIOWrapper
-from types import SimpleNamespace
-from typing import Any
-from yaml import load, dump
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
 
-root = None
+yaml = YAML()
+
+
+root_treenode = None
 
 
 cached = dict()
 seen = set()
 
 
-def evaluate(expr):
+def evaluate(expr: str):
     global cached
     global seen
-    global root
+    global root_treenode
     if expr in cached:
         return cached[expr]
 
@@ -33,77 +32,84 @@ def evaluate(expr):
         raise RecursionError(f"detected cycle for expression: {expr}")
 
     seen.add(expr)
-    result = eval(expr, None, root)
+    result = eval(expr, None, root_treenode)
     cached[expr] = result
     return result
 
 
-def is_computed_value(val: Any) -> bool:
-    """
-    a value is considered "computed" if it is a string with a walrus operator (":=")
-    """
-    return isinstance(val, str) and ':=' in val
+def is_ast_node(x) -> bool:
+    return isinstance(x, CommentedMap)
 
 
-class TreeNode(SimpleNamespace):
+class TreeNode:
+    def __init__(self, ast_node: CommentedMap):
+        self._ast_node = ast_node
+        for key, val in ast_node.items():
+            if is_ast_node(val):
+                setattr(self, key, TreeNode(val))
+            else:
+                setattr(self, key, val)
+
+    def __is_computed(self, key: str) -> bool:
+        return (key in self._ast_node.ca.items
+                and self._ast_node.ca.items[key][2] is not None)
+
+    def __get_definition(self, key: str) -> str:
+        return self._ast_node.ca.items[key][2].value.lstrip("#=").strip()
+
+    def _evaluate(self, debug=False):
+        for key in dir(self):
+            val = getattr(self, key)
+            if debug:
+                print(f"obj.{key} = {val!r}")
+            if isinstance(val, TreeNode):
+                val._evaluate(debug)
+
     def __getitem__(self, key: str):
         try:
-            if key.endswith('__def'):
-                key = key.removesuffix('__def')
-                return self.__dict__[key]
             return self.__getattribute__(key)
         except AttributeError:
             return globals()['__builtins__'].__getattribute__(key)
 
-    def __getattribute__(self, name: str):
-        val = object.__getattribute__(self, name)
-        if is_computed_value(val):
-            value, definition = val.split(':=')
-            value = evaluate(definition)
-            self.__dict__[name] = f"{value} := {definition.strip()}"
-            return value
-        else:
-            return val
+    def __getattribute__(self, key: str):
+        if key.startswith("_"):
+            return object.__getattribute__(self, key)
+        if not self.__is_computed(key):
+            return object.__getattribute__(self, key)
+        definition = self.__get_definition(key)
+        val = evaluate(definition)
+        self._ast_node[key] = val
+        return val
 
 
-def to_treenode(tree: Any) -> TreeNode:
-    if isinstance(tree, dict):
-        return TreeNode(**{key: to_treenode(val) for key, val in tree.items()})
-    return tree
+def load(file: TextIOWrapper) -> TreeNode:
+    file.seek(0)
+    yaml_ast = yaml.load(file.read())
+    return TreeNode(yaml_ast)
 
 
-def to_raw(tree: Any) -> Any:
-    if isinstance(tree, TreeNode):
-        for key in tree.__dict__:
-            tree.__getattribute__(key)
-        return {key: to_raw(val) for key, val in tree.__dict__.items()}
-    return tree
-
-
-def load_yaml(file: TextIOWrapper) -> TreeNode:
-    data: Any = load(file, Loader=Loader)
-    global root
-    root = to_treenode(data)
-    return root
-
-
-def save_yaml(data: TreeNode, file: TextIOWrapper):
+def save(file: TextIOWrapper, data: TreeNode):
     file.seek(0)
     file.truncate(0)
-    dump(to_raw(data), file, Dumper=Dumper, sort_keys=False)
+    yaml.dump(data._ast_node, file)
 
 
-def main() -> None:
+def debug_dump(obj):
+    for attr in dir(obj):
+        print("obj.%s = %r" % (attr, getattr(obj, attr)))
+
+
+def main():
     assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
     filename = sys.argv[1]
-    with open(filename, "r") as f:
-        # save copy of original file in case of unexpected errors
-        original_file = f.read()
     with open(filename, "r+") as f:
         try:
-            data = load_yaml(f)
-            __import__('pprint').pprint(data)
-            save_yaml(data, f)
+            # save copy of original file in case of unexpected errors
+            original_file = f.read()
+            global root_treenode
+            root_treenode = load(f)
+            root_treenode._evaluate()
+            save(f, root_treenode)
         except Exception as e:
             # write original file back, then throw
             f.seek(0)
