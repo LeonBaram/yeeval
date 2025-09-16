@@ -84,7 +84,7 @@ class TreeNode:
 
 def load(file: TextIOWrapper) -> TreeNode:
     file.seek(0)
-    yaml_ast = yaml.load(file.read())
+    yaml_ast = yaml.load(file)
     return TreeNode(yaml_ast)
 
 
