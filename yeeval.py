@@ -12,6 +12,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
 yaml = YAML()
+yaml.indent(mapping=2, sequence=4, offset=2)
 
 
 root_treenode = None
