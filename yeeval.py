@@ -11,6 +11,8 @@ from io import TextIOWrapper
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
+PREFIX = "#= "
+
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
 
@@ -62,10 +64,10 @@ class TreeNode:
     def __is_computed(self, key: str) -> bool:
         return (key in self._ast_node.ca.items
                 and self._ast_node.ca.items[key][2] is not None
-                and self._ast_node.ca.items[key][2].value.startswith("#="))
+                and self._ast_node.ca.items[key][2].value.startswith(PREFIX))
 
     def __get_definition(self, key: str) -> str:
-        return self._ast_node.ca.items[key][2].value.lstrip("#=").strip()
+        return self._ast_node.ca.items[key][2].value.removeprefix(PREFIX).rstrip()
 
     def _evaluate(self, debug=False):
         for key in dir(self):
