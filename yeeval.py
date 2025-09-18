@@ -24,6 +24,16 @@ cached = dict()
 seen = set()
 
 
+def prelude() -> str:
+    starting_comments = root_treenode._ast_node._yaml_get_pre_comment()
+    lines = []
+    for comment_node in starting_comments:
+        comment = comment_node.value
+        if comment.startswith(PREFIX):
+            lines.append(comment.removeprefix(PREFIX))
+    return '\n'.join(lines)
+
+
 def evaluate(expr: str):
     global cached
     global seen
@@ -35,6 +45,8 @@ def evaluate(expr: str):
         raise RecursionError(f"detected cycle for expression: {expr}")
 
     seen.add(expr)
+
+    exec(prelude(), None, root_treenode)
     result = eval(expr, None, root_treenode)
     cached[expr] = result
     return result
@@ -83,6 +95,9 @@ class TreeNode:
         except AttributeError:
             return globals()['__builtins__'].__getattribute__(key)
 
+    def __setitem__(self, key: str, val):
+        self.__setattr__(key, val)
+
     def __getattribute__(self, key: str):
         if key.startswith("_"):
             return object.__getattribute__(self, key)
@@ -120,6 +135,7 @@ def main():
             original_file = f.read()
             global root_treenode
             root_treenode = load(f)
+            exec(prelude())
             root_treenode._evaluate()
             save(f, root_treenode)
         except Exception as e:
