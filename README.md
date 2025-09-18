@@ -24,7 +24,7 @@ c: 3 #= a+b
 
 When executed, the script does the following:
 
-- parse the provided yaml file into an intermediate representation using [PyYAML](https://pyyaml.org/)
+- parse the provided yaml file into an intermediate representation using [ruamel.yaml](https://yaml.dev/doc/ruamel-yaml/)
 - look for any occurrence of a value followed by a *definition comment*
     - a definition comment is any comment starting with an equal sign, which immediately follows a value. e.g. `a: _ #= x+y-z`
     - each such value is treated as a *computed value*
