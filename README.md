@@ -38,3 +38,27 @@ Each definition is evaluated as a Python expression. You can reference any other
 - `_ := a.b + c` -- add a property to a nested property
 - `_ := a[0] * a[-1]` -- multiply the first and last elements of a list
 - `_ := sum(a)` -- add all elements of a list
+
+## Prelude
+
+yeeval also allows you to add a *prelude* to a yaml file, using a similar form of comment:
+
+```yaml
+#=def example():
+#=  return 2+2
+a: 1
+b: 2
+c: _ #= example()
+```
+
+After running yeeval on the above yaml file, the result will be:
+
+```yaml
+#=def example():
+#=  return 2+2
+a: 1
+b: 2
+c: 4 #= example()
+```
+
+**Note:** the prelude is evaluated without any "knowledge" of the yaml file. This means that, unlike the previously described inline comments, code within the prelude can't refer to values in the yaml.
