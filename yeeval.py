@@ -11,7 +11,7 @@ from io import TextIOWrapper
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
-PREFIX = "#= "
+PREFIX = "#="
 
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
