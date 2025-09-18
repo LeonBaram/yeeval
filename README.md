@@ -1,6 +1,8 @@
 # yeeval
 
-Short for "yaml eval". Allows you to define computed values in yaml as follows:
+Short for "yaml eval". Allows you to define computed values in yaml, evaluate them, and update the yaml in-place.
+
+## Example
 
 ```yaml
 a: 1
@@ -19,6 +21,14 @@ c: 3 #= a+b
 ## Usage
 
 `yeeval.py <filename>`
+
+## Rationale
+
+Spreadsheets are a very powerful tool, not just for visualizing data, but for dynamic computation. Any cell of a spreadsheet may contain not just a fixed value, but also a value defined by a *formula*, which will be computed on the fly. More than that, this formula can reference other cells in the spreadsheet, including *other* cells defined by formulae.
+
+However, spreadsheets (at time of writing) are overwhelmingly GUI applications. This project seeks to capture some of that dynamic computational capability, by allowing you to create "cells" (yaml values) defined by "formulae" (definitions written as Python expressions), which can reference other "cells" as well.
+
+On a personal level, my use-case is that I want a D&D 5e character sheet that (a) has the benefits of using a spreadsheet, and (b) I can open using Neovim.
 
 ## What the script does
 
