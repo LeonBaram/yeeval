@@ -67,7 +67,7 @@ class TreeNode:
                 and self._ast_node.ca.items[key][2].value.startswith(PREFIX))
 
     def __get_definition(self, key: str) -> str:
-        return self._ast_node.ca.items[key][2].value.removeprefix(PREFIX).rstrip()
+        return self._ast_node.ca.items[key][2].value.removeprefix(PREFIX)
 
     def _evaluate(self, debug=False):
         for key in dir(self):
