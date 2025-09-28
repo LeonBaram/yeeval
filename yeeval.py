@@ -7,6 +7,9 @@
 # ]
 # ///
 import sys
+import importlib
+import importlib.util
+import os
 from io import TextIOWrapper
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
@@ -16,6 +19,8 @@ PREFIX = "#="
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
 
+helper_spec = None
+helper_module = None
 
 root_treenode = None
 
@@ -38,6 +43,8 @@ def evaluate(expr: str, curr_val=None):
     global cached
     global seen
     global root_treenode
+    global helper_module
+    global helper_spec
     if expr in cached:
         return cached[expr]
 
@@ -46,6 +53,9 @@ def evaluate(expr: str, curr_val=None):
 
     seen.add(expr)
 
+    if helper_spec is not None and helper_module is not None:
+        helper_spec.loader.exec_module(helper_module)
+        exec("from helper import *", None, root_treenode)
     exec(prelude(), None, root_treenode)
     root_treenode['_'] = curr_val
     result = eval(expr, None, root_treenode)
@@ -94,7 +104,10 @@ class TreeNode:
         try:
             return self.__getattribute__(key)
         except AttributeError:
-            return globals()['__builtins__'].__getattribute__(key)
+            try:
+                return globals()['__builtins__'].__getattribute__(key)
+            except AttributeError:
+                return sys.modules[key]
 
     def __setitem__(self, key: str, val):
         self.__setattr__(key, val)
@@ -131,6 +144,16 @@ def debug_dump(obj):
 def main():
     assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
     filename = sys.argv[1]
+    directory = os.path.dirname(os.path.realpath(filename))
+    helper_file = f'{directory}/helper.py'
+    if os.path.exists(helper_file):
+        global helper_spec
+        global helper_module
+        helper_spec = importlib.util.spec_from_file_location(
+            "helper", helper_file)
+        helper_module = importlib.util.module_from_spec(helper_spec)
+        sys.modules["helper"] = helper_module
+        helper_spec.loader.exec_module(helper_module)
     with open(filename, "r+") as f:
         try:
             # save copy of original file in case of unexpected errors
