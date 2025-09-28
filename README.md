@@ -102,3 +102,8 @@ bardic: #= counter(_, cha, shortrest, longrest)
 ```
 
 After running `yeeval` on the above yaml, the value of `bardic` will be `"0 / 3"`. After setting `shortrest` to `true` and running `yeeval` again, its value will be `"3 / 3"`.
+
+# TODO
+- improve error handling
+    - keys that are not found should be handled more gracefully (e.g. `None` by default)
+    - better feedback for other errors (e.g. syntax)
