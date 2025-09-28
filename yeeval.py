@@ -34,7 +34,7 @@ def prelude() -> str:
     return '\n'.join(lines)
 
 
-def evaluate(expr: str):
+def evaluate(expr: str, curr_val=None):
     global cached
     global seen
     global root_treenode
@@ -47,6 +47,7 @@ def evaluate(expr: str):
     seen.add(expr)
 
     exec(prelude(), None, root_treenode)
+    root_treenode['_'] = curr_val
     result = eval(expr, None, root_treenode)
     cached[expr] = result
     return result
@@ -99,12 +100,13 @@ class TreeNode:
         self.__setattr__(key, val)
 
     def __getattribute__(self, key: str):
+        curr = object.__getattribute__(self, key)
         if key.startswith("_"):
-            return object.__getattribute__(self, key)
+            return curr
         if not self.__is_computed(key):
-            return object.__getattribute__(self, key)
+            return curr
         definition = self.__get_definition(key)
-        val = evaluate(definition)
+        val = evaluate(definition, curr)
         self._ast_node[key] = val
         return val
 
