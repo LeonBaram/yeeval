@@ -49,6 +49,18 @@ Each definition is evaluated as a Python expression. You can reference any other
 - `_ := a[0] * a[-1]` -- multiply the first and last elements of a list
 - `_ := sum(a)` -- add all elements of a list
 
+### Self-Reference
+
+When you write the definition for a particular cell, you can refer to its current value using a reserved identifier, `_`:
+
+```yaml
+a: 1
+b: 2
+c: 1 #= a + b + _
+```
+
+In the above example, after running `yeeval` once, the value of `c` will be 4. After running `yeeval` another time, it will be 7.
+
 ## Prelude
 
 yeeval also allows you to add a *prelude* to a yaml file, using a similar form of comment:
