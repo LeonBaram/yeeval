@@ -105,7 +105,7 @@ After running `yeeval` on the above yaml, the value of `bardic` will be `"0 / 3"
 
 ## Helper File
 
-As an alternative to the prelude block, you can also put various utility/helper functions in a helper file called `helper.py`, which must be in the same directory as the target yaml file. The same rules apply as for the prelude -- any code defined here will not be able to "see" the yaml structure, meaning you can't access the yaml structure using dot notation or indexes. The file must be called `helper.py`.
+As an alternative to the prelude block, you can also put various utility/helper functions in a helper file called `helper.py`, which must be in the same directory as the target yaml file. The same rules apply as for the prelude -- any code defined here will not be able to "see" the yaml structure, meaning you can't access the yaml structure using dot notation or indexes. The file must be called `helper.py`. Any code defined in this file will be automatically imported and made available in the yaml file's prelude and all inline definitions.
 
 # TODO
 - improve error handling
