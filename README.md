@@ -83,4 +83,22 @@ b: 2
 c: 4 #= example()
 ```
 
-**Note:** the prelude is evaluated without any "knowledge" of the yaml file. This means that, unlike the previously described inline comments, code within the prelude can't refer to values in the yaml.
+**Note:** the prelude is evaluated without any "knowledge" of the yaml file. This means that, unlike the previously described inline comments, code within the prelude can't refer to values in the yaml. To avoid this limitation, you can simply define functions that take those values as arguments, and pass them in while calling them in the inline cell definitions. For example:
+
+```yaml
+#=def counter(curr, max=None, *reset):
+#=    curr = curr if curr else "0 / 0"
+#=    a, b = [x.strip() for x in curr.split('/')]
+#=    max = max if max else b
+#=    val = max if any(reset) else a
+#=    return f'{val} / {max}'
+shortrest: false
+longrest: false
+charisma: 16
+cha: 3 #= (charisma-10)//2
+prof: 3
+spell_dc: 14 #= 8+cha+prof
+bardic: #= counter(_, cha, shortrest, longrest)
+```
+
+After running `yeeval` on the above yaml, the value of `bardic` will be `"0 / 3"`. After setting `shortrest` to `true` and running `yeeval` again, its value will be `"3 / 3"`.
