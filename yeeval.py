@@ -18,6 +18,7 @@ PREFIX = "#="
 
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
+yaml.width = 500
 
 helper_spec = None
 helper_module = None
