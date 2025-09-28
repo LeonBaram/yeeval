@@ -103,6 +103,10 @@ bardic: #= counter(_, cha, shortrest, longrest)
 
 After running `yeeval` on the above yaml, the value of `bardic` will be `"0 / 3"`. After setting `shortrest` to `true` and running `yeeval` again, its value will be `"3 / 3"`.
 
+## Helper File
+
+As an alternative to the prelude block, you can also put various utility/helper functions in a helper file called `helper.py`, which must be in the same directory as the target yaml file. The same rules apply as for the prelude -- any code defined here will not be able to "see" the yaml structure, meaning you can't access the yaml structure using dot notation or indexes. The file must be called `helper.py`.
+
 # TODO
 - improve error handling
     - keys that are not found should be handled more gracefully (e.g. `None` by default)
