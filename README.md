@@ -45,9 +45,9 @@ When executed, the script does the following:
 
 Each definition is evaluated as a Python expression. You can reference any other part of the provided yaml file (as in the example above). In the case of lists or nested properties, you can use indexes and dot notation respectively. You can also use any Python global builtin. Some examples:
 
-- `_ := a.b + c` -- add a property to a nested property
-- `_ := a[0] * a[-1]` -- multiply the first and last elements of a list
-- `_ := sum(a)` -- add all elements of a list
+- `_ #= a.b + c` -- add a property to a nested property
+- `_ #= a[0] * a[-1]` -- multiply the first and last elements of a list
+- `_ #= sum(a)` -- add all elements of a list
 
 ### Self-Reference
 
