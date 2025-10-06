@@ -50,6 +50,15 @@ def prelude() -> str:
 
 
 def evaluate(expr: str, curr_val=None):
+    """
+    evaluate the given expression as Python code, with the following context:
+    - all values from the YAML file, accessible using dot notation
+    - all code from the prelude string
+    - all code from the helper-file
+    - optionally, a "current value" for the expression to use
+      (useful for YAML nodes whose computation takes
+      their current state/value into account)
+    """
     global cached, seen, root_node, helper_module, helper_spec, _
     if expr in cached:
         return cached[expr]
