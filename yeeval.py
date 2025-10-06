@@ -35,6 +35,11 @@ seen = set()
 
 
 def prelude() -> str:
+    """
+    return the contents of the prelude comment as a string.
+    each line of the prelude comment is expected to start with PREFIX.
+    lines that do not start with PREFIX are skipped.
+    """
     starting_comments = root_node._yaml_get_pre_comment()
     lines = []
     for comment_node in starting_comments:
