@@ -87,17 +87,6 @@ def get_comment(node: CommentedMap | CommentedSeq, key: str | int) -> str:
     return comment_str
 
 
-def has_definition(node: CommentedMap | CommentedSeq, key: str | int) -> bool:
-    """
-    determines whether node[key] has a "definition".
-
-    (a "definition" is an inline comment starting with PREFIX.)
-    (PREFIX is a module-level variable, see source code.)
-    """
-    comment = get_comment(node, key)
-    return comment.startswith(PREFIX)
-
-
 def get_definition(node: CommentedMap | CommentedSeq, key: str | int) -> str | None:
     """
     gets the "definition" of node[key]. if it does not have one, returns None.
@@ -125,11 +114,10 @@ def commentedmap_getitem(self: CommentedMap, key: str | int):
     (PREFIX is a module-level variable, see source code.)
     """
     curr = dict.__getitem__(self, key)
-    if not has_definition(self, key):
-        return curr
     definition = get_definition(self, key)
-    val = evaluate(definition, curr)
-    return val
+    if definition is not None:
+        return evaluate(definition, curr)
+    return curr
 
 
 def commentedseq_getitem(self: CommentedSeq, key: str | int):
@@ -145,11 +133,10 @@ def commentedseq_getitem(self: CommentedSeq, key: str | int):
     (PREFIX is a module-level variable, see source code.)
     """
     curr = list.__getitem__(self, key)
-    if not has_definition(self, key):
-        return curr
     definition = get_definition(self, key)
-    val = evaluate(definition, curr)
-    return val
+    if definition is not None:
+        return evaluate(definition, curr)
+    return curr
 
 
 def commentedmap_getattr(self: CommentedMap, key: str):
