@@ -12,9 +12,11 @@ import importlib.util
 import os
 from io import TextIOWrapper
 from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 PREFIX = "#="
+
+_ = None
 
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
@@ -31,7 +33,7 @@ seen = set()
 
 
 def prelude() -> str:
-    starting_comments = root_treenode._ast_node._yaml_get_pre_comment()
+    starting_comments = root_treenode._yaml_get_pre_comment()
     lines = []
     for comment_node in starting_comments:
         comment = comment_node.value
@@ -41,11 +43,7 @@ def prelude() -> str:
 
 
 def evaluate(expr: str, curr_val=None):
-    global cached
-    global seen
-    global root_treenode
-    global helper_module
-    global helper_spec
+    global cached, seen, root_treenode, helper_module, helper_spec, _
     if expr in cached:
         return cached[expr]
 
@@ -54,87 +52,136 @@ def evaluate(expr: str, curr_val=None):
 
     seen.add(expr)
 
+    # add user-provided code from prelude and helper-file
     if helper_spec is not None and helper_module is not None:
         helper_spec.loader.exec_module(helper_module)
-        exec("from helper import *", None, root_treenode)
-    exec(prelude(), None, root_treenode)
-    root_treenode['_'] = curr_val
-    result = eval(expr, None, root_treenode)
+        exec("from helper import *", globals(), locals())
+    exec(prelude(), globals(), locals())
+
+    _ = curr_val
+
+    result = eval(expr, globals(), root_treenode | locals())
     cached[expr] = result
+
+    _ = None
+
     return result
 
 
-def is_ast_node(x) -> bool:
-    return isinstance(x, CommentedMap)
+def is_comment_node(obj: object) -> bool:
+    """
+    determines whether the given object is a "comment node".
+    a "comment node" is either a CommentedMap or a CommentedSeq.
+    """
+    return (isinstance(obj, CommentedMap)
+            or isinstance(obj, CommentedSeq))
 
 
-class TreeNode:
-    def __init__(self, ast_node: CommentedMap):
-        self._ast_node = ast_node
-        for key, val in ast_node.items():
-            if is_ast_node(val):
-                setattr(self, key, TreeNode(val))
-            elif isinstance(val, list):
-                values = []
-                for i in range(len(val)):
-                    if is_ast_node(val[i]):
-                        values.append(TreeNode(val[i]))
-                    else:
-                        values.append(val[i])
-                setattr(self, key, values)
-            else:
-                setattr(self, key, val)
-
-    def __is_computed(self, key: str) -> bool:
-        return (key in self._ast_node.ca.items
-                and self._ast_node.ca.items[key][2] is not None
-                and self._ast_node.ca.items[key][2].value.startswith(PREFIX))
-
-    def __get_definition(self, key: str) -> str:
-        return self._ast_node.ca.items[key][2].value.removeprefix(PREFIX)
-
-    def _evaluate(self, debug=False):
-        for key in dir(self):
-            val = getattr(self, key)
-            if debug:
-                print(f"obj.{key} = {val!r}")
-            if isinstance(val, TreeNode):
-                val._evaluate(debug)
-
-    def __getitem__(self, key: str):
-        try:
-            return self.__getattribute__(key)
-        except AttributeError:
-            try:
-                return globals()['__builtins__'].__getattribute__(key)
-            except AttributeError:
-                return sys.modules[key]
-
-    def __setitem__(self, key: str, val):
-        self.__setattr__(key, val)
-
-    def __getattribute__(self, key: str):
-        curr = object.__getattribute__(self, key)
-        if key.startswith("_"):
-            return curr
-        if not self.__is_computed(key):
-            return curr
-        definition = self.__get_definition(key)
-        val = evaluate(definition, curr)
-        self._ast_node[key] = val
-        return val
+def get_comment(node: CommentedMap | CommentedSeq, key: str | int) -> str:
+    """
+    gets the inline comment next to node[key].
+    if there is no comment, defaults to "".
+    """
+    if not is_comment_node(node):
+        return ""
+    if key not in node.ca.items:
+        return ""
+    tokens = node.ca.items[key]
+    comment_str = ""
+    for t in tokens:
+        if t is not None:
+            comment_str = t.value
+            break
+    return comment_str
 
 
-def load(file: TextIOWrapper) -> TreeNode:
+def has_definition(node: CommentedMap | CommentedSeq, key: str | int) -> bool:
+    """
+    determines whether node[key] has a "definition".
+
+    (a "definition" is an inline comment starting with PREFIX.)
+    (PREFIX is a module-level variable, see source code.)
+    """
+    comment = get_comment(node, key)
+    return comment.startswith(PREFIX)
+
+
+def get_definition(node: CommentedMap | CommentedSeq, key: str | int) -> str | None:
+    """
+    gets the "definition" of node[key]. if it does not have one, returns None.
+
+    (a "definition" is an inline comment starting with PREFIX.)
+    (PREFIX is a module-level variable, see source code.)
+    """
+    comment = get_comment(node, key)
+    if comment.startswith(PREFIX):
+        return comment.removeprefix(PREFIX)
+    else:
+        return None
+
+
+def commentedmap_getitem(self: CommentedMap, key: str | int):
+    """
+    overwrites CommentedMap's builtin "getitem" method as follows:
+
+    if self[key] has a "definition", ignore the current value and (re)compute
+    it based on the definition.
+
+    otherwise retrieve the current value as normal.
+
+    (a "definition" is an inline comment starting with PREFIX.)
+    (PREFIX is a module-level variable, see source code.)
+    """
+    curr = dict.__getitem__(self, key)
+    if not has_definition(self, key):
+        return curr
+    definition = get_definition(self, key)
+    val = evaluate(definition, curr)
+    return val
+
+
+def commentedseq_getitem(self: CommentedSeq, key: str | int):
+    """
+    overwrites CommentedSeq's builtin "getitem" method as follows:
+
+    if self[key] has a "definition", ignore the current value and (re)compute
+    it based on the definition.
+
+    otherwise retrieve the current value as normal.
+
+    (a "definition" is an inline comment starting with PREFIX.)
+    (PREFIX is a module-level variable, see source code.)
+    """
+    curr = list.__getitem__(self, key)
+    if not has_definition(self, key):
+        return curr
+    definition = get_definition(self, key)
+    val = evaluate(definition, curr)
+    return val
+
+
+def commentedmap_getattr(self: CommentedMap, key: str):
+    """
+    implements the builtin "getattr" method for CommentedMap,
+    by making it an alias of its builtin "getitem" method.
+
+    this allows dot-notation access (a.b)
+    to be equivalent to string indexing (a["b"]).
+    """
+    if key in self:
+        return self[key]
+    raise AttributeError(f'no such key "{key}"')
+
+
+def load(file: TextIOWrapper) -> CommentedMap:
     file.seek(0)
-    yaml_ast = yaml.load(file)
-    return TreeNode(yaml_ast)
+    return yaml.load(file)
 
 
-def save(file: TextIOWrapper, data: TreeNode):
+def save(file: TextIOWrapper, data: CommentedMap):
     file.seek(0)
     file.truncate(0)
-    yaml.dump(data._ast_node, file)
+    yaml.dump(data, file)
 
 
 def debug_dump(obj):
@@ -159,10 +206,19 @@ def main():
         try:
             # save copy of original file in case of unexpected errors
             original_file = f.read()
+
+            # load YAML AST
             global root_treenode
             root_treenode = load(f)
-            exec(prelude())
-            root_treenode._evaluate()
+
+            # modify AST nodes to evaluate inline definitions
+            CommentedMap.__getitem__ = commentedmap_getitem
+            CommentedSeq.__getitem__ = commentedseq_getitem
+
+            # modify AST nodes to allow dot-notation
+            CommentedMap.__getattr__ = commentedmap_getattr
+
+            # write YAML AST back to file
             save(f, root_treenode)
         except Exception as e:
             # write original file back, then throw
