@@ -14,6 +14,8 @@ from io import TextIOWrapper
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
+CommentedMapOrSeq = CommentedMap | CommentedSeq
+
 PREFIX = "#="
 
 _ = None
@@ -68,7 +70,7 @@ def evaluate(expr: str, curr_val=None):
     return result
 
 
-def get_comment(node: CommentedMap | CommentedSeq, key: str | int) -> str:
+def get_comment(node: CommentedMapOrSeq, key: str | int) -> str:
     """
     gets the inline comment next to node[key].
     if there is no comment, defaults to "".
@@ -87,7 +89,7 @@ def get_comment(node: CommentedMap | CommentedSeq, key: str | int) -> str:
     return comment_str
 
 
-def get_definition(node: CommentedMap | CommentedSeq, key: str | int) -> str | None:
+def get_definition(node: CommentedMapOrSeq, key: str | int) -> str | None:
     """
     gets the "definition" of node[key]. if it does not have one, returns None.
 
