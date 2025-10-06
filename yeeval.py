@@ -68,21 +68,13 @@ def evaluate(expr: str, curr_val=None):
     return result
 
 
-def is_comment_node(obj: object) -> bool:
-    """
-    determines whether the given object is a "comment node".
-    a "comment node" is either a CommentedMap or a CommentedSeq.
-    """
-    return (isinstance(obj, CommentedMap)
-            or isinstance(obj, CommentedSeq))
-
-
 def get_comment(node: CommentedMap | CommentedSeq, key: str | int) -> str:
     """
     gets the inline comment next to node[key].
     if there is no comment, defaults to "".
     """
-    if not is_comment_node(node):
+    if not ((isinstance(node, CommentedMap)
+             or isinstance(node, CommentedSeq))):
         return ""
     if key not in node.ca.items:
         return ""
