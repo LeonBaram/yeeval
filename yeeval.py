@@ -27,7 +27,7 @@ yaml.width = 500
 helper_spec = None
 helper_module = None
 
-root_node = None
+root = None
 
 
 cached = dict()
@@ -40,7 +40,7 @@ def prelude() -> str:
     each line of the prelude comment is expected to start with PREFIX.
     lines that do not start with PREFIX are skipped.
     """
-    starting_comments = root_node._yaml_get_pre_comment()
+    starting_comments = root._yaml_get_pre_comment()
     lines = []
     for comment_node in starting_comments:
         comment = comment_node.value
@@ -59,7 +59,7 @@ def evaluate(expr: str, curr_val=None):
       (useful for YAML nodes whose computation takes
       their current state/value into account)
     """
-    global cached, seen, root_node, helper_module, helper_spec, _
+    global cached, seen, root, helper_module, helper_spec, _
     if expr in cached:
         return cached[expr]
 
@@ -76,7 +76,7 @@ def evaluate(expr: str, curr_val=None):
 
     _ = curr_val
 
-    result = eval(expr, globals(), root_node | locals())
+    result = eval(expr, globals(), root | locals())
     cached[expr] = result
 
     _ = None
@@ -203,8 +203,8 @@ def main():
             original_file = f.read()
 
             # load YAML AST
-            global root_node
-            root_node = load(f)
+            global root
+            root = load(f)
 
             # modify AST nodes to evaluate inline definitions
             CommentedMap.__getitem__ = commentedmap_getitem
@@ -214,7 +214,7 @@ def main():
             CommentedMap.__getattr__ = commentedmap_getattr
 
             # write YAML AST back to file
-            save(f, root_node)
+            save(f, root)
         except Exception as e:
             # write original file back, then throw
             f.seek(0)
