@@ -27,7 +27,7 @@ yaml.width = 500
 helper_spec = None
 helper_module = None
 
-root_treenode = None
+root_node = None
 
 
 cached = dict()
@@ -35,7 +35,7 @@ seen = set()
 
 
 def prelude() -> str:
-    starting_comments = root_treenode._yaml_get_pre_comment()
+    starting_comments = root_node._yaml_get_pre_comment()
     lines = []
     for comment_node in starting_comments:
         comment = comment_node.value
@@ -45,7 +45,7 @@ def prelude() -> str:
 
 
 def evaluate(expr: str, curr_val=None):
-    global cached, seen, root_treenode, helper_module, helper_spec, _
+    global cached, seen, root_node, helper_module, helper_spec, _
     if expr in cached:
         return cached[expr]
 
@@ -62,7 +62,7 @@ def evaluate(expr: str, curr_val=None):
 
     _ = curr_val
 
-    result = eval(expr, globals(), root_treenode | locals())
+    result = eval(expr, globals(), root_node | locals())
     cached[expr] = result
 
     _ = None
@@ -189,8 +189,8 @@ def main():
             original_file = f.read()
 
             # load YAML AST
-            global root_treenode
-            root_treenode = load(f)
+            global root_node
+            root_node = load(f)
 
             # modify AST nodes to evaluate inline definitions
             CommentedMap.__getitem__ = commentedmap_getitem
@@ -200,7 +200,7 @@ def main():
             CommentedMap.__getattr__ = commentedmap_getattr
 
             # write YAML AST back to file
-            save(f, root_treenode)
+            save(f, root_node)
         except Exception as e:
             # write original file back, then throw
             f.seek(0)
