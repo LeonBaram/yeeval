@@ -184,14 +184,14 @@ def debug_dump(obj):
         print("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 
-def main():
-    assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
-    filename = sys.argv[1]
+def load_helper_file(filename: str):
+    """
+    add user-provided code from helper-file
+    """
     directory = os.path.dirname(os.path.realpath(filename))
     helper_file = f'{directory}/helper.py'
     if os.path.exists(helper_file):
-        global helper_spec
-        global helper_module
+        global helper_spec, helper_module
         helper_spec = importlib.util.spec_from_file_location(
             "helper", helper_file)
         helper_module = importlib.util.module_from_spec(helper_spec)
@@ -199,6 +199,12 @@ def main():
         helper_spec.loader.exec_module(helper_module)
         import helper
         globals().update(helper.__dict__)
+
+
+def main():
+    assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
+    filename = sys.argv[1]
+    load_helper_file(filename)
     with open(filename, "r+") as f:
         try:
             # save copy of original file in case of unexpected errors
