@@ -212,14 +212,14 @@ def main():
             global root
             root = load(f)
 
+            globals().update(root)
+
             # modify AST nodes to evaluate inline definitions
             CommentedMap.__getitem__ = commentedmap_getitem
             CommentedSeq.__getitem__ = commentedseq_getitem
 
             # modify AST nodes to allow dot-notation
             CommentedMap.__getattr__ = commentedmap_getattr
-
-            globals().update(root)
 
             # write YAML AST back to file
             save(f, root)
