@@ -76,7 +76,7 @@ def evaluate(expr: str, curr_val=None):
 
     _ = curr_val
 
-    result = eval(expr, globals(), root | locals())
+    result = eval(expr, globals(), locals())
     cached[expr] = result
 
     _ = None
@@ -197,6 +197,8 @@ def main():
         helper_module = importlib.util.module_from_spec(helper_spec)
         sys.modules["helper"] = helper_module
         helper_spec.loader.exec_module(helper_module)
+        import helper
+        globals().update(helper.__dict__)
     with open(filename, "r+") as f:
         try:
             # save copy of original file in case of unexpected errors
@@ -212,6 +214,8 @@ def main():
 
             # modify AST nodes to allow dot-notation
             CommentedMap.__getattr__ = commentedmap_getattr
+
+            globals().update(root)
 
             # write YAML AST back to file
             save(f, root)
