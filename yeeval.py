@@ -13,6 +13,7 @@ import os
 from io import TextIOWrapper
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
+from ruamel.yaml.tokens import CommentToken
 
 CommentedMapOrSeq = CommentedMap | CommentedSeq
 
@@ -94,7 +95,7 @@ def get_comment(node: CommentedMapOrSeq, key: str | int) -> str:
     tokens = node.ca.items[key]
     comment_str = ""
     for t in tokens:
-        if t is not None:
+        if isinstance(t, CommentToken):
             comment_str = t.value
             break
     return comment_str
