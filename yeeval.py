@@ -59,7 +59,7 @@ def evaluate(expr: str, curr_val=None):
       (useful for YAML nodes whose computation takes
       their current state/value into account)
     """
-    global cached, seen, root, helper_module, helper_spec, _
+    global cached, seen, root, _
     if expr in cached:
         return cached[expr]
 
@@ -68,10 +68,7 @@ def evaluate(expr: str, curr_val=None):
 
     seen.add(expr)
 
-    # add user-provided code from prelude and helper-file
-    if helper_spec is not None and helper_module is not None:
-        helper_spec.loader.exec_module(helper_module)
-        exec("from helper import *", globals(), locals())
+    # add user-provided code from prelude
     exec(prelude(), globals(), locals())
 
     _ = curr_val
