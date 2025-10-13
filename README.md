@@ -110,4 +110,3 @@ As an alternative to the prelude block, you can also put various utility/helper 
 # TODO
 - improve error handling
     - keys that are not found should be handled more gracefully (e.g. `None` by default)
-    - better feedback for other errors (e.g. syntax)
