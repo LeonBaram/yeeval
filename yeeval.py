@@ -78,10 +78,12 @@ def evaluate(expr: str, curr_val=None, line_number=-1):
         eprint(f"{err_name} on line {line_number}: {err}")
         result = _
 
-    _ = None
-
     if result is None:
-        eprint(f'expression "{expr}" evaluated to None')
+        eprint(
+            f'expression "{expr}" evaluated to "None"; using existing value "{_}"')
+        result = _
+
+    _ = None
     return result
 
 
