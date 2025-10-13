@@ -106,9 +106,9 @@ def get_definition(node: CommentedMapOrSeq, key: str | int) -> str | None:
         return None
 
 
-def commentedmap_getitem(self: CommentedMap, key: str | int):
+def overwrite_getitem(self: CommentedMap | CommentedSeq, key: str | int):
     """
-    overwrites CommentedMap's builtin "getitem" method as follows:
+    overwrites CommentedMap and CommentedSeq's builtin "getitem" method as follows:
 
     if self[key] has a "definition", ignore the current value and (re)compute
     it based on the definition.
@@ -118,29 +118,15 @@ def commentedmap_getitem(self: CommentedMap, key: str | int):
     (a "definition" is an inline comment starting with PREFIX.)
     (PREFIX is a module-level variable, see source code.)
     """
-    curr = dict.__getitem__(self, key)
+    assert isinstance(self, CommentedMap) or isinstance(self, CommentedSeq)
+    superclass = dict if isinstance(self, CommentedMap) else list
+    curr = superclass.__getitem__(self, key)
+
     definition = get_definition(self, key)
     if definition is not None:
-        return evaluate(definition, curr, line_number=self.lc.key(key)[0])
-    return curr
+        line_number = self.lc.key(key)[0]
+        return evaluate(definition, curr, line_number)
 
-
-def commentedseq_getitem(self: CommentedSeq, key: str | int):
-    """
-    overwrites CommentedSeq's builtin "getitem" method as follows:
-
-    if self[key] has a "definition", ignore the current value and (re)compute
-    it based on the definition.
-
-    otherwise retrieve the current value as normal.
-
-    (a "definition" is an inline comment starting with PREFIX.)
-    (PREFIX is a module-level variable, see source code.)
-    """
-    curr = list.__getitem__(self, key)
-    definition = get_definition(self, key)
-    if definition is not None:
-        return evaluate(definition, curr, line_number=self.lc.key(key)[0])
     return curr
 
 
@@ -206,8 +192,8 @@ def main():
             globals().update(root)
 
             # modify AST nodes to evaluate inline definitions
-            CommentedMap.__getitem__ = commentedmap_getitem
-            CommentedSeq.__getitem__ = commentedseq_getitem
+            CommentedMap.__getitem__ = overwrite_getitem
+            CommentedSeq.__getitem__ = overwrite_getitem
 
             # modify AST nodes to allow dot-notation
             CommentedMap.__getattr__ = commentedmap_getattr
