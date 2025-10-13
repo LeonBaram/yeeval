@@ -108,7 +108,7 @@ def get_definition(node: CommentedMapOrSeq, key: str | int) -> str | None:
 
 def overwrite_getitem(self: CommentedMap | CommentedSeq, key: str | int):
     """
-    overwrites CommentedMap and CommentedSeq's builtin "getitem" method as follows:
+    overwrites CommentedMap and CommentedSeq's builtin "getitem" method:
 
     if self[key] has a "definition", ignore the current value and (re)compute
     it based on the definition.
