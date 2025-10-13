@@ -50,7 +50,7 @@ def prelude() -> str:
     return '\n'.join(lines)
 
 
-def evaluate(expr: str, curr_val=None):
+def evaluate(expr: str, curr_val=None, line_number=-1):
     """
     evaluate the given expression as Python code, with the following context:
     - all values from the YAML file, accessible using dot notation
@@ -65,16 +65,23 @@ def evaluate(expr: str, curr_val=None):
         return cached[expr]
 
     if expr in seen:
-        raise RecursionError(f"detected cycle for expression: {expr}")
+        raise RecursionError(
+            f"detected cycle for expression: {expr} (line {line_number})")
 
     seen.add(expr)
 
-    # add user-provided code from prelude
-    exec(prelude(), globals(), locals())
+    try:
+        # add user-provided code from prelude
+        exec(prelude(), globals(), locals())
 
-    _ = curr_val
+        _ = curr_val
 
-    result = eval(expr, globals(), locals())
+        result = eval(expr, globals(), locals())
+
+    except Exception as err:
+        print(f"error on line {line_number}: {err}")
+        result = _
+
     cached[expr] = result
 
     _ = None
@@ -130,7 +137,7 @@ def commentedmap_getitem(self: CommentedMap, key: str | int):
     curr = dict.__getitem__(self, key)
     definition = get_definition(self, key)
     if definition is not None:
-        return evaluate(definition, curr)
+        return evaluate(definition, curr, line_number=self.lc.key(key)[0])
     return curr
 
 
@@ -149,7 +156,7 @@ def commentedseq_getitem(self: CommentedSeq, key: str | int):
     curr = list.__getitem__(self, key)
     definition = get_definition(self, key)
     if definition is not None:
-        return evaluate(definition, curr)
+        return evaluate(definition, curr, line_number=self.lc.key(key)[0])
     return curr
 
 
@@ -203,7 +210,7 @@ def main():
     assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
     filename = sys.argv[1]
     load_helper_file(filename)
-    with open(filename, "r+") as f:
+    with open(filename, "r+", encoding="utf-8") as f:
         try:
             # save copy of original file in case of unexpected errors
             original_file = f.read()
