@@ -124,7 +124,7 @@ def overwrite_getitem(self: CommentedMap | CommentedSeq, key: str | int):
 
     definition = get_definition(self, key)
     if definition is not None:
-        line_number = self.lc.key(key)[0]
+        line_number = self.lc.key(key)[0]+1
         return evaluate(definition, curr, line_number)
 
     return curr
