@@ -31,10 +31,6 @@ helper_module = None
 root = None
 
 
-cached = dict()
-seen = set()
-
-
 def prelude() -> str:
     """
     return the contents of the prelude comment as a string.
@@ -60,16 +56,7 @@ def evaluate(expr: str, curr_val=None, line_number=-1):
       (useful for YAML nodes whose computation takes
       their current state/value into account)
     """
-    global cached, seen, root, _
-    if expr in cached:
-        return cached[expr]
-
-    if expr in seen:
-        raise RecursionError(
-            f"detected cycle for expression: {expr} (line {line_number})")
-
-    seen.add(expr)
-
+    global root, _
     try:
         # add user-provided code from prelude
         exec(prelude(), globals(), locals())
@@ -82,10 +69,7 @@ def evaluate(expr: str, curr_val=None, line_number=-1):
         print(f"error on line {line_number}: {err}")
         result = _
 
-    cached[expr] = result
-
     _ = None
-
     return result
 
 
