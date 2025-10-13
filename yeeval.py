@@ -31,6 +31,11 @@ helper_module = None
 root = None
 
 
+def eprint(*args, **kwargs):
+    """like `print()`, but outputs to stderr"""
+    print(*args, file=sys.stderr, **kwargs)
+
+
 def prelude() -> str:
     """
     return the contents of the prelude comment as a string.
@@ -65,12 +70,18 @@ def evaluate(expr: str, curr_val=None, line_number=-1):
 
         result = eval(expr, globals(), locals())
 
+    except NameError as name_err:
+        key = name_err.name
+        result = root[key]
     except Exception as err:
         err_name = type(err).__name__
-        print(f"{err_name} on line {line_number}: {err}")
+        eprint(f"{err_name} on line {line_number}: {err}")
         result = _
 
     _ = None
+
+    if result is None:
+        eprint(f'expression "{expr}" evaluated to None')
     return result
 
 
@@ -121,7 +132,12 @@ def overwrite_getitem(self: CommentedMap | CommentedSeq, key: str | int):
     """
     assert isinstance(self, CommentedMap) or isinstance(self, CommentedSeq)
     superclass = dict if isinstance(self, CommentedMap) else list
-    curr = superclass.__getitem__(self, key)
+    try:
+        curr = superclass.__getitem__(self, key)
+    except KeyError:
+        curr = None
+    except IndexError:
+        curr = None
 
     definition = get_definition(self, key)
     if definition is not None:
