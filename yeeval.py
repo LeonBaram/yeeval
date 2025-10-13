@@ -66,7 +66,8 @@ def evaluate(expr: str, curr_val=None, line_number=-1):
         result = eval(expr, globals(), locals())
 
     except Exception as err:
-        print(f"error on line {line_number}: {err}")
+        err_name = type(err).__name__
+        print(f"{err_name} on line {line_number}: {err}")
         result = _
 
     _ = None
