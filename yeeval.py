@@ -10,10 +10,23 @@ import sys
 import importlib
 import importlib.util
 import os
-from io import TextIOWrapper
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.tokens import CommentToken
+import fileinput
+import argparse
+
+# get name of helper file from CLI args
+parser = argparse.ArgumentParser(
+    prog="yeeval.py",
+    description="updates yaml values based on inline definition comments",
+    epilog="Usage: cat myfile.yml | yeeval.py > mynewfile.yml")
+parser.add_argument("-H", "--helper")
+
+args = parser.parse_args()
+helper = args.helper
+if helper is None:
+    helper = "./helper.py"
 
 CommentedMapOrSeq = CommentedMap | CommentedSeq
 
@@ -162,28 +175,19 @@ def commentedmap_getattr(self: CommentedMap, key: str):
     raise AttributeError(f'no such key "{key}"')
 
 
-def load(file: TextIOWrapper) -> CommentedMap:
-    file.seek(0)
-    return yaml.load(file)
-
-
-def save(file: TextIOWrapper, data: CommentedMap):
-    file.seek(0)
-    file.truncate(0)
-    yaml.dump(data, file)
-
-
 def debug_dump(obj):
     for attr in dir(obj):
         print("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 
-def load_helper_file(filename: str):
+def load_helper_file():
     """
     add user-provided code from helper-file
     """
-    directory = os.path.dirname(os.path.realpath(filename))
-    helper_file = f'{directory}/helper.py'
+    args = parser.parse_args()
+    helper_file = args.helper
+    if helper_file is None:
+        helper_file = "./helper.py"
     if os.path.exists(helper_file):
         global helper_spec, helper_module
         helper_spec = importlib.util.spec_from_file_location(
@@ -196,17 +200,13 @@ def load_helper_file(filename: str):
 
 
 def main():
-    assert len(sys.argv) == 2, "usage: yeeval.py <filename>"
-    filename = sys.argv[1]
-    load_helper_file(filename)
-    with open(filename, "r+", encoding="utf-8") as f:
+    load_helper_file()
+    with fileinput.input(encoding="utf-8") as input_stream:
+        input_lines = "\n".join(input_stream)
         try:
-            # save copy of original file in case of unexpected errors
-            original_file = f.read()
-
             # load YAML AST
             global root
-            root = load(f)
+            root = yaml.load(input_lines)
 
             globals().update(root)
 
@@ -217,13 +217,11 @@ def main():
             # modify AST nodes to allow dot-notation
             CommentedMap.__getattr__ = commentedmap_getattr
 
-            # write YAML AST back to file
-            save(f, root)
+            # print updated YAML
+            yaml.dump(root, sys.stdout)
         except Exception as e:
-            # write original file back, then throw
-            f.seek(0)
-            f.truncate(0)
-            f.write(original_file)
+            # print original input
+            print(input_lines)
             raise e
 
 
