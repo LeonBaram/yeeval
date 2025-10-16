@@ -89,8 +89,9 @@ def evaluate(expr: str, curr_val=None, line_number=-1):
         result = _
 
     if result is None:
-        eprint(
-            f'expression "{expr}" evaluated to "None"; using existing value "{_}"')
+        eprint(f'''
+expression "{expr}" evaluated to "None";
+using existing value "{_}"''')
         result = _
 
     _ = None
