@@ -83,9 +83,6 @@ def evaluate(expr: str, curr_val=None, line_number=-1):
 
         result = eval(expr, globals(), locals())
 
-    except NameError as name_err:
-        key = name_err.name
-        result = root[key]
     except Exception as err:
         err_name = type(err).__name__
         eprint(f"{err_name} on line {line_number}: {err}")
@@ -147,12 +144,7 @@ def overwrite_getitem(self: CommentedMap | CommentedSeq, key: str | int):
     """
     assert isinstance(self, CommentedMap) or isinstance(self, CommentedSeq)
     superclass = dict if isinstance(self, CommentedMap) else list
-    try:
-        curr = superclass.__getitem__(self, key)
-    except KeyError:
-        curr = None
-    except IndexError:
-        curr = None
+    curr = superclass.__getitem__(self, key)
 
     definition = get_definition(self, key)
     if definition is not None:
