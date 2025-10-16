@@ -194,27 +194,27 @@ def load_helper_file():
 def main():
     load_helper_file()
     with fileinput.input(encoding="utf-8") as input_stream:
-        input_lines = "\n".join(input_stream)
-        try:
-            # load YAML AST
-            global root
-            root = yaml.load(input_lines)
+        input_lines = "".join(input_stream)
+    try:
+        # load YAML AST
+        global root
+        root = yaml.load(input_lines)
 
-            globals().update(root)
+        globals().update(root)
 
-            # modify AST nodes to evaluate inline definitions
-            CommentedMap.__getitem__ = overwrite_getitem
-            CommentedSeq.__getitem__ = overwrite_getitem
+        # modify AST nodes to evaluate inline definitions
+        CommentedMap.__getitem__ = overwrite_getitem
+        CommentedSeq.__getitem__ = overwrite_getitem
 
-            # modify AST nodes to allow dot-notation
-            CommentedMap.__getattr__ = commentedmap_getattr
+        # modify AST nodes to allow dot-notation
+        CommentedMap.__getattr__ = commentedmap_getattr
 
-            # print updated YAML
-            yaml.dump(root, sys.stdout)
-        except Exception as e:
-            # print original input
-            print(input_lines)
-            raise e
+        # print updated YAML
+        yaml.dump(root, sys.stdout)
+    except Exception as e:
+        # write original input to stdout
+        sys.stdout.write(input_lines)
+        raise e
 
 
 if __name__ == "__main__":
