@@ -6,21 +6,23 @@
 #     "ruamel-yaml",
 # ]
 # ///
-import sys
+import argparse
+import fileinput
 import importlib
 import importlib.util
 import os
+import sys
+
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.tokens import CommentToken
-import fileinput
-import argparse
 
 # get name of helper file from CLI args
 parser = argparse.ArgumentParser(
     prog="yeeval.py",
     description="updates yaml values based on inline definition comments",
-    epilog="Usage: cat myfile.yml | yeeval.py > mynewfile.yml")
+    epilog="Usage: cat myfile.yml | yeeval.py > mynewfile.yml",
+)
 parser.add_argument("-H", "--helper")
 
 args = parser.parse_args()
@@ -61,7 +63,7 @@ def prelude() -> str:
         comment = comment_node.value
         if comment.startswith(PREFIX):
             lines.append(comment.removeprefix(PREFIX))
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def evaluate(expr: str, curr_val=None, line_number=-1):
@@ -89,9 +91,11 @@ def evaluate(expr: str, curr_val=None, line_number=-1):
         result = _
 
     if result is None:
-        eprint(f'''
+        eprint(
+            f'''
 expression "{expr}" evaluated to "None";
-using existing value "{_}"''')
+using existing value "{_}"'''
+        )
         result = _
 
     _ = None
@@ -103,8 +107,7 @@ def get_comment(node: CommentedMapOrSeq, key: str | int) -> str:
     gets the inline comment next to node[key].
     if there is no comment, defaults to "".
     """
-    if not ((isinstance(node, CommentedMap)
-             or isinstance(node, CommentedSeq))):
+    if not ((isinstance(node, CommentedMap) or isinstance(node, CommentedSeq))):
         return ""
     if key not in node.ca.items:
         return ""
@@ -149,7 +152,7 @@ def overwrite_getitem(self: CommentedMap | CommentedSeq, key: str | int):
 
     definition = get_definition(self, key)
     if definition is not None:
-        line_number = self.lc.key(key)[0]+1
+        line_number = self.lc.key(key)[0] + 1
         return evaluate(definition, curr, line_number)
 
     return curr
@@ -183,12 +186,12 @@ def load_helper_file():
         helper_file = "./helper.py"
     if os.path.exists(helper_file):
         global helper_spec, helper_module
-        helper_spec = importlib.util.spec_from_file_location(
-            "helper", helper_file)
+        helper_spec = importlib.util.spec_from_file_location("helper", helper_file)
         helper_module = importlib.util.module_from_spec(helper_spec)
         sys.modules["helper"] = helper_module
         helper_spec.loader.exec_module(helper_module)
         import helper
+
         globals().update(helper.__dict__)
 
 
